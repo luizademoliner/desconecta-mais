@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: desconecta-mais
+  datasource:
+    url: jdbc:mysql://localhost:3306/desconecta_mais?createDatabaseIfNotExist=true
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  # driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update #só adiciona o que tem de novo, mandtendo os dados antigos
+      # create-drop -> toda a vez que rodas a aplicação ele vai apagar tudo e criar as tabelas vazias novamente
+
+    # ver como o string gera as querys de forma automatica - ele mostra pelo console
+    show-sql: true
+    properties: # pra ele não imprimir as querys em uma linha só
+      hibernate:
+        format_sql: true
+
+  jwt:
+    expiration: ${JWT_EXPIRATION:900000} # 15 minutos -- validade do token
+    key: ${JWT_KEY:nXABv5=D1KQZsXLD^oQ*=h_Hs8m#$ARt!#Z3HzXxhDJ&dz^I$yXRHTwswdgIpDG9*_5m890JAb=M8y33zp6dwwg$!3O_jSj7ep6YdI!YK&zE7Pzo4AOqwvhHR!YB&ZB7d5DWr!6PtThANJ3fXBcDDpruKIn!t7+2r5jhh#wde!!&7TOHOZx=#bNCf4AlxiniEt!OA6BLFAFv6SZb70Q08nKNPUBI!nnYcmxgYE5j#C$Nu$8PqvLW76ju6_lt!dy*0vBJH^eDQ_7xy&BChp+njbpt8imSvYJmd1X9=Y5w1_lNPhpp#ALqY8A01yEQt1uy8ey=uixPUl9UhPYsBTTuw=Wc}
+
+
