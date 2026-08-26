@@ -4,12 +4,12 @@ import br.com.tcc.desconecta_mais.dto.LoginRequestDto;
 import br.com.tcc.desconecta_mais.dto.RegisterRequestDto;
 import br.com.tcc.desconecta_mais.dto.TokenResponseDto;
 import br.com.tcc.desconecta_mais.service.AuthenticationService;
+import com.google.firebase.auth.FirebaseToken;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1/auth")
@@ -20,12 +20,20 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public void register(@RequestBody @Valid RegisterRequestDto registerRequestDto) throws Exception {
-        authenticationService.register(registerRequestDto);
+    public void register(@RequestBody @Valid RegisterRequestDto registerRequestDto, HttpServletRequest request) throws Exception {
+        FirebaseToken firebaseToken = (FirebaseToken) request.getAttribute("firebaseToken");
+
+        authenticationService.register(registerRequestDto, firebaseToken);
     }
 
-    @PostMapping("/login")
-    public TokenResponseDto login(@RequestBody @Valid LoginRequestDto loginRequestDto) throws Exception {
-        return authenticationService.login(loginRequestDto);
+    @GetMapping("/email-existe")
+    public ResponseEntity<Boolean> emailExiste(@RequestParam String email) {
+        return ResponseEntity.ok(authenticationService.emailExiste(email));
+    }
+
+    @PostMapping("/login-confirmado") // <-- novo
+    public void loginConfirmado(HttpServletRequest request) throws Exception {
+        FirebaseToken firebaseToken = (FirebaseToken) request.getAttribute("firebaseToken");
+        authenticationService.confirmarLogin(firebaseToken);
     }
 }

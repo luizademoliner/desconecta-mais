@@ -1,15 +1,10 @@
 package br.com.tcc.desconecta_mais.database.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
-import org.jspecify.annotations.Nullable;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
+import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -18,12 +13,11 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 @Builder
-public class UsuarioEntity implements UserDetails {
+public class UsuarioEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) //ver se o postgree usa esse tipo ou sequence
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false)
@@ -32,49 +26,27 @@ public class UsuarioEntity implements UserDetails {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String senha;
+    @Column(name = "firebase_uid", nullable = false, unique = true)
+    private String firebaseUid;
+
+    @Column(name = "data_inicio_sequencia", nullable = false)
+    private LocalDateTime dataInicioSequencia;
+
+    @Column(name = "pontos_gerais", nullable = false)
+    private Integer pontosGerais = 0;
+
+    @Column(name = "sequencia_dias", nullable = false)
+    private Integer sequenciaDias = 0;
+
+    @Column(name = "imagem_perfil")
+    private String imagemPerfil;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "usuarios_roles",
+    @JoinTable(
+            name = "usuarios_roles",
             joinColumns = @JoinColumn(name = "usuario_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    @Builder.Default
     private Set<RolesEntity> roles = new HashSet<>();
-
-    //ver depois se essa tabela vai ter alguma relação
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(); //verificar isso depois
-    }
-
-    @Override
-    public @Nullable String getPassword() {
-        return senha;
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
-    }
 }
