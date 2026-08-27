@@ -18,4 +18,6 @@ public class DashboardResponseDto {
     private long mediaDiariaSegundosSemana;
     private List<FocoDiaDto> tempoPorDiaSemana;
 
+    private long maximoEixoY;
+    private List<Long> escalaEixoY;
 }

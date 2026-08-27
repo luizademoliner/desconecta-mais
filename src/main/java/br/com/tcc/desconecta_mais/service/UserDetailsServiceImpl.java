@@ -1,4 +1,4 @@
-package br.com.tcc.desconecta_mais.service;
+/*package br.com.tcc.desconecta_mais.service;
 
 
 import br.com.tcc.desconecta_mais.database.repository.IUsuarioRepository;
@@ -21,3 +21,4 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
     }
 }
+*/

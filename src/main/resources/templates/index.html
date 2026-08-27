@@ -114,9 +114,11 @@
         </div>
 
         <!-- Rótulos dos dias abaixo da área do gráfico -->
-        <div class="eixo-x">
-            <span th:each="dia : ${dashboard.tempoPorDiaSemana}"
-                  th:text="${#strings.substring(dia.diaAbreviado, 0, 3)}">Seg</span>
+        <div class="eixo-y">
+            <span th:each="valor : ${dashboard.escalaEixoY}"
+                  th:text="${valor}">
+                240
+            </span>
         </div>
     </div>
 

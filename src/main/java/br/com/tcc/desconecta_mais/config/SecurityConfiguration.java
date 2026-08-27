@@ -37,7 +37,7 @@ public class SecurityConfiguration {
                         }))
                 .authorizeHttpRequests(auth -> auth
                         //paginas publicas
-                        .requestMatchers( "/css/**", "/images/**", "/js/**").permitAll()// "/**" significa que todos endpoints seriam permitidos -- não é uma boa prática
+                    .requestMatchers( "/css/**", "/images/**", "/js/**").permitAll()// "/**" significa que todos endpoints seriam permitidos -- não é uma boa prática
 
                         //Endpoints públicos de autenticacao
                         .requestMatchers( "/v1/auth/**", "/cadastro", "/login").permitAll()
