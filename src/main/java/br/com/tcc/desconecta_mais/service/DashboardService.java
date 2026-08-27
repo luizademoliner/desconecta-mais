@@ -21,106 +21,97 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DashboardService {
 
-    private final IRegistroTempoTelaRepository registroTempoTelaRepository;
+        private final IRegistroTempoTelaRepository registroTempoTelaRepository;
 
-    public DashboardResponseDto montar(UsuarioEntity usuario) {
+        public DashboardResponseDto montar(UsuarioEntity usuario) {
 
-        LocalDate hoje = LocalDate.now();
-        LocalDate inicioSemana = hoje.minusDays(6);
+                LocalDate hoje = LocalDate.now();
+                LocalDate inicioSemana = hoje.minusDays(6);
 
-        List<RegistroTempoTelaEntity> registrosSemana =
-                registroTempoTelaRepository
-                        .findByUsuarioAndDataBetweenOrderByDataAsc(
-                                usuario,
-                                inicioSemana,
-                                hoje
-                        );
+                List<RegistroTempoTelaEntity> registrosSemana = registroTempoTelaRepository
+                                .findByUsuarioAndDataBetweenOrderByDataAsc(
+                                                usuario,
+                                                inicioSemana,
+                                                hoje);
 
-        Map<LocalDate, Long> tempoPorData = registrosSemana.stream()
-                .collect(Collectors.toMap(
-                        RegistroTempoTelaEntity::getData,
-                        RegistroTempoTelaEntity::getTempoTotalSegundos
-                ));
+                Map<LocalDate, Long> tempoPorData = registrosSemana.stream()
+                                .collect(Collectors.toMap(
+                                                RegistroTempoTelaEntity::getData,
+                                                RegistroTempoTelaEntity::getTempoTotalSegundos));
 
-        long tempoHoje = tempoPorData.getOrDefault(hoje, 0L);
+                long tempoHoje = tempoPorData.getOrDefault(hoje, 0L);
 
-        List<FocoDiaDto> tempoPorDiaSemana = new ArrayList<>();
+                List<FocoDiaDto> tempoPorDiaSemana = new ArrayList<>();
 
-        long somaSemana = 0;
-        long maiorTempoSegundos = 0;
+                long somaSemana = 0;
+                long maiorTempoSegundos = 0;
 
-        for (int i = 0; i < 7; i++) {
+                for (int i = 0; i < 7; i++) {
 
-            LocalDate dia = inicioSemana.plusDays(i);
+                        LocalDate dia = inicioSemana.plusDays(i);
 
-            long segundos = tempoPorData.getOrDefault(dia, 0L);
+                        long segundos = tempoPorData.getOrDefault(dia, 0L);
 
-            somaSemana += segundos;
-            
-            if (segundos > maiorTempoSegundos) {
-                maiorTempoSegundos = segundos;
-            }
+                        somaSemana += segundos;
 
-            String abreviado = dia.getDayOfWeek()
-                    .getDisplayName(
-                            TextStyle.SHORT,
-                            new Locale("pt", "BR")
-                    );
+                        if (segundos > maiorTempoSegundos) {
+                                maiorTempoSegundos = segundos;
+                        }
 
-            tempoPorDiaSemana.add(
-                    new FocoDiaDto(
-                            capitalizar(abreviado),
-                            segundos
-                    )
-            );
+                        String abreviado = dia.getDayOfWeek()
+                                        .getDisplayName(
+                                                        TextStyle.SHORT,
+                                                        new Locale("pt", "BR"));
+
+                        tempoPorDiaSemana.add(
+                                        new FocoDiaDto(
+                                                        capitalizar(abreviado),
+                                                        segundos));
+                }
+
+                long maiorTempoHoras = (maiorTempoSegundos + 3599) / 3600;
+
+                long maximoEixoY;
+
+                if (maiorTempoHoras == 0) {
+                        maximoEixoY = 4;
+                } else {
+                        maximoEixoY = ((maiorTempoHoras + 3) / 4) * 4;
+                }
+
+                long intervaloEixoY = maximoEixoY / 4;
+
+                List<Long> escalaEixoY = new ArrayList<>();
+
+                for (int i = 4; i >= 0; i--) {
+                        escalaEixoY.add(intervaloEixoY * i);
+                }
+
+                long diasDeSequencia = ChronoUnit.DAYS.between(
+                                usuario.getDataInicioSequencia().toLocalDate(),
+                                hoje) + 1;
+
+                DashboardResponseDto dto = new DashboardResponseDto();
+
+                dto.setTempoHojeSegundos(tempoHoje);
+                dto.setPontosGerais(usuario.getPontosGerais());
+                dto.setDiasDeSequencia(diasDeSequencia);
+                dto.setMediaDiariaSegundosSemana(somaSemana / 7);
+                dto.setTempoPorDiaSemana(tempoPorDiaSemana);
+
+                dto.setMaximoEixoY(maximoEixoY);
+                dto.setEscalaEixoY(escalaEixoY);
+
+                return dto;
         }
 
-        long maiorTempoMinutos = (maiorTempoSegundos + 59) / 60;
+        private String capitalizar(String texto) {
 
-        long maximoEixoY;
+                if (texto == null || texto.isEmpty()) {
+                        return texto;
+                }
 
-        if (maiorTempoMinutos <= 60) {
-            maximoEixoY = 60;
-        } else {
-            maximoEixoY =
-                    ((maiorTempoMinutos + 59) / 60) * 60;
+                return texto.substring(0, 1).toUpperCase()
+                                + texto.substring(1);
         }
-
-
-        long intervaloEixoY = maximoEixoY / 4;
-
-        List<Long> escalaEixoY = new ArrayList<>();
-
-        for (int i = 4; i >= 0; i--) {
-            escalaEixoY.add(intervaloEixoY * i);
-        }
-
-        long diasDeSequencia = ChronoUnit.DAYS.between(
-                usuario.getDataInicioSequencia().toLocalDate(),
-                hoje
-        ) + 1;
-
-        DashboardResponseDto dto = new DashboardResponseDto();
-
-        dto.setTempoHojeSegundos(tempoHoje);
-        dto.setPontosGerais(usuario.getPontosGerais());
-        dto.setDiasDeSequencia(diasDeSequencia);
-        dto.setMediaDiariaSegundosSemana(somaSemana / 7);
-        dto.setTempoPorDiaSemana(tempoPorDiaSemana);
-
-        dto.setMaximoEixoY(maximoEixoY);
-        dto.setEscalaEixoY(escalaEixoY);
-
-        return dto;
-    }
-
-    private String capitalizar(String texto) {
-
-        if (texto == null || texto.isEmpty()) {
-            return texto;
-        }
-
-        return texto.substring(0, 1).toUpperCase()
-                + texto.substring(1);
-    }
 }

@@ -77,50 +77,40 @@
         </div>
     </div>
 
-    <!-- Card Gráfico Ampliado -->
     <div class="card-grafico">
-        <div class="grafico-titulo">Foco por dia</div>
+    <div class="grafico-titulo">Foco por dia</div>
 
-        <div class="grafico-wrapper">
-            <!-- Eixo Y com os números -->
-            <div class="eixo-y">
-                <span>240</span>
-                <span>180</span>
-                <span>120</span>
-                <span>60</span>
-                <span>0</span>
+    <div class="grafico-wrapper">
+        <div class="eixo-y">
+            <span th:each="valor : ${dashboard.escalaEixoY}" th:text="${valor} + 'h'">4h</span>
+        </div>
+
+        <!-- Área do Gráfico e Linhas de Grade -->
+        <div class="grafico-area">
+            <div class="linhas-grade">
+                <div class="linha"></div>
+                <div class="linha"></div>
+                <div class="linha"></div>
+                <div class="linha"></div>
+                <div class="linha"></div>
             </div>
 
-            <!-- Área do Gráfico e Linhas de Grade -->
-            <div class="grafico-area">
-                <div class="linhas-grade">
-                    <div class="linha"></div>
-                    <div class="linha"></div>
-                    <div class="linha"></div>
-                    <div class="linha"></div>
-                    <div class="linha"></div>
-                </div>
-
-                <div class="grafico-barras">
-                    <div class="barra-item" th:each="dia : ${dashboard.tempoPorDiaSemana}">
-                        <div class="barra-trilho">
-                            <div class="barra"
-                                 th:style="'height: ' + ${dia.tempoSegundos / 60 > 240 ? 100 : (dia.tempoSegundos / 60) / 240.0 * 100} + '%'">
-                            </div>
+            <div class="grafico-barras">
+                <div class="barra-item" th:each="dia : ${dashboard.tempoPorDiaSemana}">
+                    <div class="barra-trilho">
+                        <div class="barra"
+                             th:style="'height: ' + (${dia.tempoSegundos / 3600.0 / dashboard.maximoEixoY * 100 > 100 ? 100 : dia.tempoSegundos / 3600.0 / dashboard.maximoEixoY * 100}) + '%'">
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Rótulos dos dias abaixo da área do gráfico -->
-        <div class="eixo-y">
-            <span th:each="valor : ${dashboard.escalaEixoY}"
-                  th:text="${valor}">
-                240
-            </span>
-        </div>
     </div>
+
+    <div class="eixo-x">
+        <span th:each="dia : ${dashboard.tempoPorDiaSemana}" th:text="${dia.diaAbreviado}">Seg</span>
+    </div>
+</div>
 
     <!-- Navegação Inferior -->
     <nav class="bottom-nav">
