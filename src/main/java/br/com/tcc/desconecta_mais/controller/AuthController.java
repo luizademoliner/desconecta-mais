@@ -26,11 +26,6 @@ public class AuthController {
         authenticationService.register(registerRequestDto, firebaseToken);
     }
 
-    @GetMapping("/email-existe")
-    public ResponseEntity<Boolean> emailExiste(@RequestParam String email) {
-        return ResponseEntity.ok(authenticationService.emailExiste(email));
-    }
-
     @PostMapping("/login-confirmado") // <-- novo
     public void loginConfirmado(HttpServletRequest request) throws Exception {
         FirebaseToken firebaseToken = (FirebaseToken) request.getAttribute("firebaseToken");
