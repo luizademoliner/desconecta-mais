@@ -13,9 +13,5 @@ public class RegisterRequestDto {
 
     @NotBlank // impede valores vazios ou de outro tipo
     private String nome;
-    @NotBlank
-    private String email;
-    @NotBlank
-    private String senha;
 }
 

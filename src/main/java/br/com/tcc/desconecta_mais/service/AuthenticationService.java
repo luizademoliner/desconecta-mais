@@ -1,24 +1,17 @@
 package br.com.tcc.desconecta_mais.service;
 
-import br.com.tcc.desconecta_mais.config.TokenProvider;
 import br.com.tcc.desconecta_mais.database.entity.RolesEntity;
 import br.com.tcc.desconecta_mais.database.entity.UsuarioEntity;
 import br.com.tcc.desconecta_mais.database.repository.IRolesRepository;
 import br.com.tcc.desconecta_mais.database.repository.IUsuarioRepository;
-import br.com.tcc.desconecta_mais.dto.LoginRequestDto;
 import br.com.tcc.desconecta_mais.dto.RegisterRequestDto;
-import br.com.tcc.desconecta_mais.dto.TokenResponseDto;
 import br.com.tcc.desconecta_mais.enums.RoleTypeEnum;
+import com.google.firebase.auth.FirebaseToken;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Service
@@ -27,51 +20,56 @@ public class AuthenticationService {
 
     private final IUsuarioRepository usuarioRepository;
     private final IRolesRepository rolesRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final TokenProvider tokenProvider;
-    @Value("${JWT_EXPIRATION:900000}")
-    private long expirationTime;
 
+    public void register(RegisterRequestDto dto, FirebaseToken firebaseToken) throws BadRequestException {
 
-    // METODO DE CADASTRO
-    public void register(RegisterRequestDto dto) throws BadRequestException {
-        UsuarioEntity usuario = usuarioRepository.findByEmail(dto.getEmail())
-                .orElse(null);
+        String firebaseUid = firebaseToken.getUid();
+        String email = firebaseToken.getEmail();
 
-        if (usuario != null){
-            throw new BadRequestException("Aluno já cadastrado com este email");
+        // Verifica se o UID do Firebase já está cadastrado
+        if (usuarioRepository.findByFirebaseUid(firebaseUid).isPresent()) {
+            throw new BadRequestException("Usuário já cadastrado");
         }
 
-        RolesEntity role = rolesRepository.findByNome(RoleTypeEnum.ROLE_USUARIO.name())
-                        .orElseGet(() -> rolesRepository.save(RolesEntity.builder()
-                                         .nome(RoleTypeEnum.ROLE_USUARIO.name())
-                                   .build()));
+        // Verifica se o email já está cadastrado
+        if (usuarioRepository.findByEmail(email).isPresent()) {
+            throw new BadRequestException("Email já cadastrado");
+        }
 
-        usuarioRepository.save(UsuarioEntity.builder()
+        RolesEntity role = rolesRepository
+                .findByNome(RoleTypeEnum.ROLE_USUARIO.name())
+                .orElseGet(() -> rolesRepository.save(
+                        RolesEntity.builder()
+                        .nome(RoleTypeEnum.ROLE_USUARIO.name())
+                        .build()
+                ));
+
+        UsuarioEntity usuario = UsuarioEntity.builder()
+                .firebaseUid(firebaseUid)
                 .nome(dto.getNome())
-                .email(dto.getEmail())
+                .email(email)
+                .dataInicioSequencia(LocalDateTime.now())
+                .pontosGerais(0)
+                .sequenciaDias(0)
                 .roles(Set.of(role))
-                .senha(passwordEncoder.encode(dto.getSenha()))
-                .build());
+                .build();
+
+        usuarioRepository.save(usuario);
     }
 
-    // METODO DE LOGIN
-    public TokenResponseDto login(LoginRequestDto dto) throws Exception {
-        try {
-            //authentication provider -> userDetailsService -> passworEncode.maches() -> autenticado
-            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.getEmail(), dto.getSenha()));
-            String token = tokenProvider.gerarToken(authentication);
-
-            return new TokenResponseDto(token, expirationTime);
-
-
-        }catch (BadCredentialsException e) {
-            throw new BadRequestException("Credenciais inválidas"); //teste para dar commit =)
-        } catch(Exception e) {
-            throw e;
-
-        }
+    public boolean emailExiste(String email) {                    /*acho que esse metod nnão será mais necessário depois*/
+        return usuarioRepository.findByEmail(email).isPresent();  //que a tela de login ficar 100% pronta
     }
+
+    public void confirmarLogin(FirebaseToken firebaseToken) throws BadRequestException {
+        String firebaseUid = firebaseToken.getUid();
+
+        UsuarioEntity usuario = usuarioRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new BadRequestException("Usuário não encontrado"));
+
+        usuario.setDataInicioSequencia(LocalDateTime.now());
+        usuarioRepository.save(usuario);
+    }
+
 
 }

@@ -8,5 +8,7 @@ import java.util.Optional;
 public interface IUsuarioRepository extends JpaRepository<UsuarioEntity, Integer> {
 
     Optional<UsuarioEntity> findByEmail(String email);
+
+    Optional<UsuarioEntity> findByFirebaseUid(String firebaseUid);
     
 }

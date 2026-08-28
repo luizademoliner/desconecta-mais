@@ -17,11 +17,11 @@ public class TokenProvider {
 
     //Repsonsavel por gerar e validar um token
 
-    @Value("${JWT_EXPIRATION}")
+    @Value("${spring.jwt.expiration}")
     private long expirationTime;
 
-    @Value("${JWT_KEY}")
-    private String key;
+    @Value("${spring.jwt.key}")
+    private String key;;
 
     //Gerar um token
     public String gerarToken(Authentication authentication) {
