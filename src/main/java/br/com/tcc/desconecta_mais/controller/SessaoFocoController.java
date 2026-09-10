@@ -41,10 +41,16 @@ public class SessaoFocoController {
         return sessaoFocoService.cancelar(usuario, id);
     }
 
+    @GetMapping("/ativa")
+    public SessaoFocoResponseDto buscarAtiva(@AuthenticationPrincipal UsuarioEntity usuario) throws NotFoundException {
+        return sessaoFocoService.buscarAtiva(usuario);
+    }
+
     @GetMapping("/{id}")
     public SessaoFocoResponseDto buscar(
             @PathVariable Long id,
             @AuthenticationPrincipal UsuarioEntity usuario) throws NotFoundException {
         return sessaoFocoService.buscar(usuario, id);
     }
+
 }

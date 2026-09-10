@@ -2,9 +2,12 @@ package br.com.tcc.desconecta_mais.service;
 
 import br.com.tcc.desconecta_mais.database.entity.AplicativoEntity;
 import br.com.tcc.desconecta_mais.database.entity.SessaoFocoEntity;
+import br.com.tcc.desconecta_mais.database.entity.TarefaEntity;
 import br.com.tcc.desconecta_mais.database.entity.UsuarioEntity;
 import br.com.tcc.desconecta_mais.database.repository.IAplicativoRepository;
 import br.com.tcc.desconecta_mais.database.repository.ISessaoFocoRepository;
+import br.com.tcc.desconecta_mais.database.repository.ITarefaRepository;
+import br.com.tcc.desconecta_mais.database.repository.IUsuarioRepository;
 import br.com.tcc.desconecta_mais.dto.IniciarSessaoFocoRequestDto;
 import br.com.tcc.desconecta_mais.dto.SessaoFocoResponseDto;
 import br.com.tcc.desconecta_mais.enums.StatusSessaoFocoEnum;
@@ -26,6 +29,8 @@ public class SessaoFocoService {
 
     private final ISessaoFocoRepository sessaoFocoRepository;
     private final IAplicativoRepository aplicativoRepository;
+    private final ITarefaRepository tarefaRepository; // Adicionado
+    private final IUsuarioRepository usuarioRepository;
 
     @Transactional
     public SessaoFocoResponseDto iniciar(UsuarioEntity usuario, IniciarSessaoFocoRequestDto dto) {
@@ -38,8 +43,6 @@ public class SessaoFocoService {
                 .collect(Collectors.toSet());
 
         SessaoFocoEntity sessao = SessaoFocoEntity.builder()
-                .titulo(dto.getTitulo())
-                .objetivo(dto.getObjetivo())
                 .dataInicio(agora)
                 .dataFim(dataFim)
                 .status(StatusSessaoFocoEnum.EM_ANDAMENTO)
@@ -56,8 +59,20 @@ public class SessaoFocoService {
         SessaoFocoEntity sessao = buscarSessaoDoUsuario(usuario, sessaoId);
         validarSessaoEmAndamento(sessao);
 
+        // Atualiza status da sessão
         sessao.setStatus(StatusSessaoFocoEnum.CONCLUIDA);
         sessaoFocoRepository.save(sessao);
+
+        // Regra de Gamificação: 10 pontos base + 5 por tarefa concluída
+        List<TarefaEntity> tarefas = tarefaRepository.findAllBySessaoFocoOrderByDataCriacaoAsc(sessao);
+        long tarefasConcluidas = tarefas.stream().filter(TarefaEntity::isConcluida).count();
+
+        int pontosGanhos = 10 + (int) (tarefasConcluidas * 5);
+
+        // Adiciona ao saldo do usuário e salva no banco
+        usuario.setPontosGerais(usuario.getPontosGerais() + pontosGanhos);
+        usuarioRepository.save(usuario);
+
         return paraDto(sessao);
     }
 
@@ -75,7 +90,7 @@ public class SessaoFocoService {
         return paraDto(buscarSessaoDoUsuario(usuario, sessaoId));
     }
 
-    private SessaoFocoEntity buscarSessaoDoUsuario(UsuarioEntity usuario, Long sessaoId) throws NotFoundException{
+    public SessaoFocoEntity buscarSessaoDoUsuario(UsuarioEntity usuario, Long sessaoId) throws NotFoundException{
         return sessaoFocoRepository.findByIdAndUsuario(sessaoId, usuario)
                 .orElseThrow(() -> new NotFoundException("Sessão de foco não encontrada"));
     }
@@ -96,14 +111,17 @@ public class SessaoFocoService {
                 ));
     }
 
-    private SessaoFocoResponseDto paraDto(SessaoFocoEntity sessao) {
-        List<String> pacotes = sessao.getAplicativosBloqueados().stream()
-                .map(AplicativoEntity::getPacote)
-                .collect(Collectors.toList());
+    private SessaoFocoResponseDto paraDto(SessaoFocoEntity s) {
+        List<String> pacotes = s.getAplicativosBloqueados().stream()
+                .map(AplicativoEntity::getPacote).collect(Collectors.toList());
+        return new SessaoFocoResponseDto(s.getId(), s.getDataInicio(), s.getDataFim(),
+                s.getStatus().name(), pacotes);
+    }
 
-        return new SessaoFocoResponseDto(
-                sessao.getId(), sessao.getTitulo(), sessao.getObjetivo(),
-                sessao.getDataInicio(), sessao.getDataFim(), sessao.getStatus(), pacotes
-        );
+    public SessaoFocoResponseDto buscarAtiva(UsuarioEntity usuario) throws NotFoundException{
+        SessaoFocoEntity sessao = sessaoFocoRepository
+                .findFirstByUsuarioAndStatusOrderByDataInicioDesc(usuario, StatusSessaoFocoEnum.EM_ANDAMENTO)
+                .orElseThrow(() -> new NotFoundException("Nenhuma sessão ativa"));
+        return paraDto(sessao);
     }
 }

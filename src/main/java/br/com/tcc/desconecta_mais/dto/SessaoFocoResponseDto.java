@@ -14,11 +14,9 @@ import java.util.List;
 @Builder
 public class SessaoFocoResponseDto {
     private Long id;
-    private String titulo;
-    private String objetivo;
     private LocalDateTime dataInicio;
     private LocalDateTime dataFim;
-    private StatusSessaoFocoEnum status;
+    private String status;
     private List<String> pacotesBloqueados;
 
     /*public SessaoFocoResponseDto(Long id, String titulo, String objetivo,
