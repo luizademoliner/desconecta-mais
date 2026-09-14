@@ -14,13 +14,6 @@ import java.util.List;
 @Builder
 public class IniciarSessaoFocoRequestDto {
 
-    @NotBlank
-    @Size(max = 100)
-    private String titulo;
-
-    @Size(max = 500)
-    private String objetivo;
-
     @NotNull
     @Min(1)
     @Max(240) // limite de 4h por sessão - evita valores absurdos

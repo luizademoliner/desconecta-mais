@@ -18,11 +18,6 @@ public class SessaoFocoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String titulo;
-
-    private String objetivo;
-
     @Column(name = "data_inicio", nullable = false)
     private LocalDateTime dataInicio;
 

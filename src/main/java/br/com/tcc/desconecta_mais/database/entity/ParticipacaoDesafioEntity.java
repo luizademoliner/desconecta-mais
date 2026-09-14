@@ -23,11 +23,11 @@ public class ParticipacaoDesafioEntity {
     private LocalDate dataEntrada;
 
     @ManyToOne
-    @Column (name = "usuario_id", nullable = false)
+    @JoinColumn(name = "usuario_id", nullable = false)
     private UsuarioEntity usuario;
 
     @ManyToOne
-    @Column (name = "desafio_id", nullable = false)
+    @JoinColumn(name = "desafio_id", nullable = false)
     private DesafioEntity desafio;
 
     @Column (name = "pontuacao_total", nullable = false)

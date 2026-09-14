@@ -8,7 +8,6 @@ import br.com.tcc.desconecta_mais.database.repository.ISessaoFocoRepository;
 import br.com.tcc.desconecta_mais.dto.IniciarSessaoFocoRequestDto;
 import br.com.tcc.desconecta_mais.dto.SessaoFocoResponseDto;
 import br.com.tcc.desconecta_mais.enums.StatusSessaoFocoEnum;
-
 import br.com.tcc.desconecta_mais.exception.BadRequestException;
 import br.com.tcc.desconecta_mais.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +37,6 @@ public class SessaoFocoService {
                 .collect(Collectors.toSet());
 
         SessaoFocoEntity sessao = SessaoFocoEntity.builder()
-                .titulo(dto.getTitulo())
-                .objetivo(dto.getObjetivo())
                 .dataInicio(agora)
                 .dataFim(dataFim)
                 .status(StatusSessaoFocoEnum.EM_ANDAMENTO)
@@ -53,7 +50,7 @@ public class SessaoFocoService {
 
     @Transactional
     public SessaoFocoResponseDto concluir(UsuarioEntity usuario, Long sessaoId) throws NotFoundException, BadRequestException {
-        SessaoFocoEntity sessao = buscarSessaoDoUsuario(usuario, sessaoId);
+        SessaoFocoEntity sessao = buscarDoUsuario(usuario, sessaoId);
         validarSessaoEmAndamento(sessao);
 
         sessao.setStatus(StatusSessaoFocoEnum.CONCLUIDA);
@@ -63,7 +60,7 @@ public class SessaoFocoService {
 
     @Transactional
     public SessaoFocoResponseDto cancelar(UsuarioEntity usuario, Long sessaoId) throws BadRequestException, NotFoundException {
-        SessaoFocoEntity sessao = buscarSessaoDoUsuario(usuario, sessaoId);
+        SessaoFocoEntity sessao = buscarDoUsuario(usuario, sessaoId);
         validarSessaoEmAndamento(sessao);
 
         sessao.setStatus(StatusSessaoFocoEnum.CANCELADA);
@@ -72,12 +69,20 @@ public class SessaoFocoService {
     }
 
     public SessaoFocoResponseDto buscar(UsuarioEntity usuario, Long sessaoId) throws NotFoundException {
-        return paraDto(buscarSessaoDoUsuario(usuario, sessaoId));
+        return paraDto(buscarDoUsuario(usuario, sessaoId));
     }
 
-    private SessaoFocoEntity buscarSessaoDoUsuario(UsuarioEntity usuario, Long sessaoId) throws NotFoundException{
-        return sessaoFocoRepository.findByIdAndUsuario(sessaoId, usuario)
-                .orElseThrow(() -> new NotFoundException("Sessão de foco não encontrada"));
+    public SessaoFocoResponseDto buscarAtiva(UsuarioEntity usuario) throws NotFoundException {
+        SessaoFocoEntity sessao = sessaoFocoRepository
+                .findFirstByUsuarioAndStatusOrderByDataInicioDesc(usuario, StatusSessaoFocoEnum.EM_ANDAMENTO)
+                .orElseThrow(() -> new NotFoundException("Nenhuma sessão ativa"));
+        return paraDto(sessao);
+    }
+
+    // package-private/public: usado também pelo TarefaService
+    public SessaoFocoEntity buscarDoUsuario(UsuarioEntity usuario, Long id) throws NotFoundException {
+        return sessaoFocoRepository.findByIdAndUsuario(id, usuario)
+                .orElseThrow(() -> new NotFoundException("Sessão não encontrada"));
     }
 
     private void validarSessaoEmAndamento(SessaoFocoEntity sessao) throws BadRequestException {
@@ -91,7 +96,7 @@ public class SessaoFocoService {
                 .orElseGet(() -> aplicativoRepository.save(
                         AplicativoEntity.builder()
                                 .pacote(pacote)
-                                .nome(pacote) // nome real pode ser ajustado depois via tela de admin, se necessário
+                                .nome(pacote)
                                 .build()
                 ));
     }
@@ -102,8 +107,8 @@ public class SessaoFocoService {
                 .collect(Collectors.toList());
 
         return new SessaoFocoResponseDto(
-                sessao.getId(), sessao.getTitulo(), sessao.getObjetivo(),
-                sessao.getDataInicio(), sessao.getDataFim(), sessao.getStatus(), pacotes
+                sessao.getId(), sessao.getDataInicio(), sessao.getDataFim(),
+                sessao.getStatus().name(), pacotes
         );
     }
 }
